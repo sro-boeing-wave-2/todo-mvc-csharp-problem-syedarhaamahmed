@@ -25,10 +25,15 @@ namespace todo.Services
 
         public async Task<List<Data>> GetMultipleLabels(string title, string label, bool? pinned)
         {
-            return await _testcontext.Data.Include(x => x.checklist).Include(x => x.label).Where(
-            m => ((string.IsNullOrEmpty(title) || (m.Title == title)) && ((string.IsNullOrEmpty(label)) || (m.label)
-            .Any(b => b.text == label)) && ((!pinned.HasValue) || (m.IsPinned == pinned))))
-            .ToListAsync();
+            Func<Data, bool> NotesMatchingTitleOrLabelOrIsPinned = m => (
+                      (string.IsNullOrEmpty(title) || m.Title == title)
+                      && (string.IsNullOrEmpty(label) || m.label.Any(b => b.text == label))
+                      && (!pinned.HasValue || m.IsPinned == pinned));
+
+            return await _testcontext.Data
+                   .Include(x => x.checklist)
+                   .Include(x => x.label)
+                   .Where(NotesMatchingTitleOrLabelOrIsPinned).ToListAsync();
         }
 
         public async Task<Data> GetNoteByID(int id)
